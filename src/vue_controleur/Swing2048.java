@@ -105,10 +105,10 @@ public class Swing2048 extends JFrame implements Observer {
             @Override
             public void keyPressed(KeyEvent e) {
                 switch(e.getKeyCode()) {  // on regarde quelle touche a été pressée
-                    case KeyEvent.VK_LEFT : jeu.rnd(); break; // A changer, car ici à chaque case que l'on appuie on génère une nouvelle classe.
-                    case KeyEvent.VK_RIGHT : jeu.rnd(); break;
-                    case KeyEvent.VK_DOWN : jeu.rnd(); break;
-                    case KeyEvent.VK_UP : jeu.rnd(); break;
+                    case KeyEvent.VK_LEFT : jeu.monTest(); break; // A changer, car ici à chaque case que l'on appuie on génère une nouvelle classe.
+                    case KeyEvent.VK_RIGHT : jeu.monTest(); break;
+                    case KeyEvent.VK_DOWN : jeu.monTest(); break;
+                    case KeyEvent.VK_UP : jeu.monTest(); break;
                 }
             }
         });
