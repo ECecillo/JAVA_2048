@@ -20,3 +20,7 @@ Pour bouger une case :
 # Fin de partie 
 
 Test, lorsque l'on a terminé le tour et que l'on va générer une nouvelle valeur dans le tableau, si on peut pas mettre de nouvelle case terminé.
+# Remarque sur certains éléments
+
+Lorsque l'on change la valeur d'une case via le tableau ou Hashmap, comme c'est une référence
+la valeur est changé aussi bien dans le tableau que la hashmap.

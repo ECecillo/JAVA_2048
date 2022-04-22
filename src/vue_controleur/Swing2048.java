@@ -1,6 +1,7 @@
 package vue_controleur;
 
 import modele.Case;
+import modele.Direction;
 import modele.Jeu;
 
 import javax.swing.*;
@@ -80,7 +81,7 @@ public class Swing2048 extends JFrame implements Observer {
                     for (int j = 0; j < jeu.getSize(); j++) {
                         Case c = jeu.getCase(i, j);
                         // Si la case du tableau est null on affiche une case avec un texte vide.
-                        if (c == null) {
+                        if (c == null || c.getValeur() == 0) {
 
                             tabC[i][j].setText("");
 
@@ -101,14 +102,17 @@ public class Swing2048 extends JFrame implements Observer {
      * Correspond à la fonctionnalité de Contrôleur : écoute les évènements, et déclenche des traitements sur le modèle
      */
     private void ajouterEcouteurClavier() {
+        for(int i = 0; i < 4; i++) {
+            jeu.setTabCases(1,i,2);
+        }
         addKeyListener(new KeyAdapter() { // new KeyAdapter() { ... } est une instance de classe anonyme, il s'agit d'un objet qui correspond au controleur dans MVC
             @Override
             public void keyPressed(KeyEvent e) {
                 switch(e.getKeyCode()) {  // on regarde quelle touche a été pressée
-                    case KeyEvent.VK_LEFT : jeu.monTest(); break; // A changer, car ici à chaque case que l'on appuie on génère une nouvelle classe.
-                    case KeyEvent.VK_RIGHT : jeu.monTest(); break;
-                    case KeyEvent.VK_DOWN : jeu.monTest(); break;
-                    case KeyEvent.VK_UP : jeu.monTest(); break;
+                    case KeyEvent.VK_LEFT : jeu.monTest(Direction.gauche); break; // A changer, car ici à chaque case que l'on appuie on génère une nouvelle classe.
+                    case KeyEvent.VK_RIGHT : jeu.monTest(Direction.droite); break;
+                    case KeyEvent.VK_DOWN : jeu.monTest(Direction.bas); break;
+                    case KeyEvent.VK_UP : jeu.monTest(Direction.haut); break;
                 }
             }
         });

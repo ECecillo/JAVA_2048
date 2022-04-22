@@ -1,5 +1,7 @@
 package modele;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.*;
 import java.awt.Point;
 
@@ -10,7 +12,10 @@ public class Jeu extends Observable {
     // Créer une Hash map pour retrouver l'indice de la classe.
     private HashMap<Case, Point> IndexCase;
 
-    // redéfinir le Equals.
+    /**
+     * Regarde combien de case dispo il reste dans notre tableau.
+     */
+    private int case_dispo;
 
     // Créer un nombre aléatoire en utilisant une seed à 4 qui nous permettra
     // d'utiliser le nextInt.
@@ -19,31 +24,9 @@ public class Jeu extends Observable {
     public Jeu(int size) {
         tabCases = new Case[size][size];
         IndexCase = new HashMap<Case, Point>(size * size);
+        case_dispo = size * size;
         initialise_zero();
-        monTest();
-    }
-
-    public void monTest() {
-        new Thread() {
-            public void run() {
-                //System.out.println("Hello there");
-                ajoute_nombre_aleatoire();
-                ajoute_nombre_aleatoire();
-            }
-        }.start();
-        // Notification de la vue, suite à la mise à jour du champ lastValue.
-        setChanged();
-        // Va appeler la méthode update dans le Swing2048 (Vue) pour mettre à jour
-        // l'affichage Graphique.
-        notifyObservers();
-    }
-
-    public int getSize() {
-        return tabCases.length;
-    }
-
-    public Case getCase(int i, int j) {
-        return tabCases[i][j];
+        //monTest();
     }
 
     // Récupère les coordonées de la case dans la HashMap.
@@ -51,6 +34,146 @@ public class Jeu extends Observable {
         return IndexCase.get(key);
     }
 
+
+    /**
+     * Fonction de Controle qui va s'occuper d'appeler toutes les cases pour qu'ellle s'échange ou fusionne leur valeur.
+     * @param direction Direction vers laquelle les cases vont devoir s'interchanger ou fusionner.
+     */
+    public void action(Direction direction) {
+        // Selon la direction demandé par l'utilisateur,
+        int direction_colonne = 0, direction_ligne = 0, // Indique dans quelle sens on va incrémenter nos index.
+                colonne_start = 0, ligne_start = 0, // Si on va vers le haut ou gauche on part des extrémités.
+                colonne_end = this.getSize(), ligne_end = this.getSize(); // On a également besoin de savoir jusqu'où on va.
+        switch (direction) {
+            case haut -> {
+                ligne_start = ((this.getSize()-1)*-1); // On part de la ligne 3.
+                direction_ligne = -1; // On décrémente.
+                ligne_end = 0; // jusqu'à 0.
+            }
+            // On part de la colonne et ligne 0 et on incrémente jusqu'à la taille de la grille.
+            case droite -> direction_colonne = 1;
+            case bas -> {
+                direction_ligne = 1;
+            }
+            case gauche -> {
+                colonne_start = ((this.getSize()-1)*-1); // On part de la dernière colonne.
+                direction_colonne = -1; // On décrémente la colonne de -1.
+                colonne_end = 0; // Jusqu'à 0.
+            }
+            default -> throw new IllegalStateException("Cette direction n'existe pas.");
+        }
+        System.out.format("Nous allons nous déplacer vers %s \nDonc i est égale à %s\nEt j est égale à %s\n",
+                direction, direction_ligne, direction_colonne);
+        System.out.println("On commence à la ligne d'indice " + Math.abs(ligne_start) + " et de colonne " + Math.abs(colonne_start));
+        System.out.println("On fini à la ligne " + Math.abs(ligne_end) + " et colonne " + Math.abs(colonne_end));
+        // Pour chacune des cases on va appeler leur fonction déplace qui va s'occuper de gérer leur changement de valeur.
+        for (int i = ligne_start; Math.abs(i) < ligne_end; i++) {
+            for (int j = colonne_start; Math.abs(j) < colonne_end; j++) {
+                // Pour les directions haut et gauche, ligne_start et colonne sont négatifs.
+                // Afin d'éviter un problème d'indice on les reconverties en nombre positif.
+                int absolute_i = Math.abs(i);
+                int absolute_j = Math.abs(j);
+
+                int index_i_voisin = ligne_start + direction_ligne;
+                int index_j_voisin = colonne_start + direction_colonne;
+                // Si la case voisine est bien dans la grille, on peut faire l'échange avec la case (i,j).
+                /*if(!((index_i_voisin > tabCases.length || index_i_voisin < 0)
+                        || (index_j_voisin > tabCases.length || index_j_voisin < 0))) {
+                    // On demande à la case [i][j] de se déplacer avec sa case voisine aux coordonnées [index_i_voisin][index_j_voisin].
+
+                    Point voisin = IndexCase.get(tabCases[index_i_voisin][index_j_voisin]);
+                    tabCases[i][j].deplacer(voisin, this);
+                    //afficheCoordonnees(voisin);
+                }
+                else {
+                    System.out.format("Skipping ligne %s et colonne %s \n", i,j);
+                }*/
+                System.out.println("La valeur est i est : " + absolute_i + " et la valeur j est : " + absolute_j);
+                System.out.println("La valeur i du voisin : " + index_i_voisin + " et son j est : " + index_j_voisin);
+            }
+        }
+        // On a fini de déplacer toutes les Cases entre elles on va pouvoir ajouter 2 nouvelles valeurs dans le jeu.
+        // Flemme de faire des copier-coller en plus on peut être amené à en générer plus donc on aura juste à changer le 2.
+        /*for (int i = 0; i < 2; i++) {
+            ajoute_nombre_aleatoire();
+        }*/
+    }
+
+    public static boolean checkInBound(int value, int upperBound, int lowerBound) {
+        return value < upperBound && value > lowerBound;
+    }
+
+    /**
+     * Procédure qui affiche les coordonnées d'un point passé en paramètre.
+     * @param p Point dont on veut voir les coordonnées.
+     */
+    public static void afficheCoordonnees(Point p) {
+        System.out.format("\nX : %s \nY : %s \n", p.getX(), p.getY());
+    }
+    public void monTest(Direction direction) {
+        new Thread(() -> {
+            action(direction);
+        }).start();
+        // Notification de la vue, suite à la mise à jour du champ lastValue.
+        setChanged();
+        // Va appeler la méthode update dans le Swing2048 (Vue) pour mettre à jour
+        // l'affichage Graphique.
+        notifyObservers();
+    }
+    /**
+     * @param row : Ligne du tableau.
+     * Tableau 1D de case où les valeurs égales à 0 ou null sont à droite.
+     */
+    private void slide (Case[] row) {
+        int i = 0;
+        System.out.println("Hello there " + IndexCase.get(row[0]));
+        for (int j = row.length - 1; j > 0; j--) {
+            //System.out.println("Hello there j : " + j + " i : " + i);
+            /**
+             * On check si la première valeur est null (i) et si la dernière est non null (j).
+             * Si c'est le cas alors on inverse les deux et on réduit le j pour que à la prochaine itération on regarde celui d'avant.
+             * Si les deux sont null on décrémente j et on reteste.
+             * Si les deux ont des valeurs non null on décrémente juste j.
+             * Si j <= i on arrête, car on a trié le tout.
+             * Complexité O(n) -> pas ouf.
+             */
+            if(j <= i ) {
+                break;
+            }
+            if((row[i].getValeur() == 0 || row[i] == null)
+                    && (row[j].getValeur() != 0 || row[j] != null)) {
+                Case swap = row[i]; // Case Null.
+                row[i] = row[j]; // On met celle avec une Valeur dans la non null.
+                row[j] = swap; // On met la Null dans l'ancienne case.
+                Point coord_j = IndexCase.get(row[j]);
+                Point coord_swap = IndexCase.get(swap);
+
+                // On oublie pas de changer les cases dans la HashMap.
+                // On a décidé de faire une suppression puis de remettre les Case dans la HashMap.
+                IndexCase.remove(swap);// Coordonnées de l'ancien i.
+                IndexCase.put(swap, coord_j); // Les nouvelles coordonnées de i sont celles de j.
+
+                IndexCase.remove(row[j]);
+                IndexCase.put(row[j], coord_swap); // Les nouvelles coordonnées de j sont celles de l'ancien i.
+
+                i++;
+            }
+        }
+    }
+
+    /**
+     *
+     * @param array : Tableau / Object 2D dont on veut extraire la colonne.
+     * @param index : La colonne que l'on veut extraire du tableau 2D.
+     * @return Un Tableau qui contient les éléments de la colonne que l'on a passé en paramètre.
+     */
+    private static Object[] getColumn(Object[][] array, int index) {
+        Object[] column = new Object[array[0].length];
+        for (int i = 0; i < column.length; i++) {
+            column[i] = array[i][index];
+        }
+        return column;
+    }
     // Nous permettra de savoir ce qui se passe dans le tableau de Jeu.
     public void Debug_Jeu() {
         // On récupère chaque clés de la HashMap et on les stocks dans un Set.
@@ -100,11 +223,17 @@ public class Jeu extends Observable {
         return listOfKeys;
     }
 
-    private synchronized void ajoute_nombre_aleatoire() {
+    public synchronized void ajoute_nombre_aleatoire() {
+        if(case_dispo <= 0) {
+            System.out.println("Le Jeu est plein on ne peut plus continuer.");
+            // Pour le moment on arrête le jeu, on devra changer par une fonction qui s'occupe de gérer la fin du jeu.
+        }
+        case_dispo--;
         // Opti Possible : Après avoir effectué les déplacements et les fusions on
         // devrait avoir des valeurs null si on reparcours dans le même sens.
         // On récupère toutes les clés (cases) qui ont une valeur null.
         List<Case> liste_case_null = getAllCaseFromValue(0);
+        //System.out.println(liste_case_null);
         // On stock la taille de la Liste pour ensuite choisir une clé aléatoire dans la
         // liste.
         int taille_liste = liste_case_null.size();
@@ -115,7 +244,7 @@ public class Jeu extends Observable {
         // On choisi une Case aléatoire dans la Liste qui a une valeur Null.
         Case case_aleatoire = liste_case_null.get(rnd.nextInt(taille_liste));
         // On récupère les coordonnées de la case à partir de la hashmap pour
-        // pouvoiraussi changer la valeur de la case du tableau.
+        // pouvoir aussi changer la valeur de la case du tableau.
         Point coordo_case = IndexCase.get(case_aleatoire);
         // On doit créer une autre valeur aléatoire pour savoir si on met un 2 ou un 4.
         Random rnd_value = new Random();
@@ -130,21 +259,21 @@ public class Jeu extends Observable {
             nouvelle_case = new Case(4, case_aleatoire.getID());
         }
         // On remplace l'ancienne case dans notre tableau par la nouvelle.
-        tabCases[coordo_case.x][coordo_case.y] = nouvelle_case;
+        setIndexCase(case_aleatoire, nouvelle_case);
+        setTabCases(nouvelle_case, nouvelle_case);
         // On oublie pas de changer la case dans la HashMap.
-        // On a décidé de faire une suppression puis de remettre la Case dans la
-        // HashMap.
-        IndexCase.remove(case_aleatoire);
-        IndexCase.put(nouvelle_case, coordo_case);
-        // Autre version possible apparemment plus optimisé : map.put( nouvelle_case, map.remove(case_aleatoire) );
-        System.out.println(coordo_case);
-
     }
 
-    private void test_equals() throws Exception {
+    /**
+     * Fonction qui appel la méthode static dans Case pour comparer 2 case entre elle.
+     * @param case1 Case source.
+     * @param case2 Case que l'on va comparer.
+     * @throws Exception
+     */
+    private void test_equals(Case case1, Case case2) throws Exception {
         // Test la fonction d'égalité qui doit remplir les 3 règles du contrat
         // (Réflexivité, Symétrie, Transitivité).
-        Case.should_be_equals();
+        Case.equal_Case(case1, case2);
     }
 
     // Initialise notre tableau à Null.
@@ -206,7 +335,7 @@ public class Jeu extends Observable {
                 }
                 try {
                     // tabCases[0][0].equals(tabCases[1][0]);
-                    test_equals();
+                    //test_equals();
                     System.out.println("Tests passed Successfully !");
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -221,6 +350,103 @@ public class Jeu extends Observable {
         // l'affichage Graphique.
         notifyObservers();
 
+    }
+
+
+    // Accesseur et Mutateur.
+
+    /**
+     *
+     * @return Récupère la taille du tableau.
+     */
+    public int getSize() {
+        return tabCases.length;
+    }
+
+    /**
+     *
+     * @param i entier qui correspond à la ligne dans le tableau de jeu.
+     * @param j entier qui correspond à la colonne.
+     * @return La Case qui sont à la ligne i et la colonne j.
+     */
+    public Case getCase(int i, int j) {
+        return tabCases[i][j];
+    }
+
+    /**
+     *
+     * @param p Point qui correspond aux coordonnées d'une case.
+     * @return La Case qui correspond à ces coordonnées.
+     */
+    public Case getCase(Point p) {
+        return tabCases[p.x][p.y];
+    }
+
+    /**
+     *
+     * @param i La ligne où se trouve la case que l'on veut changer.
+     * @param j La colonne où se trouve la case que l'on veut changer.
+     * @param nouvelle_valeur La nouvelle valeur de cette case.
+     */
+    public void setTabCases(int i, int j, int nouvelle_valeur) {
+        tabCases[i][j].setValeur(nouvelle_valeur);
+    }
+
+    /**
+     *
+     * @param p Coordonnées d'une case où x et y sont les i et j.
+     * @param nouvelle_valeur Nouvelle valeur de la Case qui se trouve dans le tableau de Case.
+     */
+    public void setTabCases(Point p, int nouvelle_valeur) {
+        tabCases[p.x][p.y].setValeur(nouvelle_valeur);
+    }
+
+    /**
+     *
+     * @param p Coordonnées de la case que l'on veut changer.
+     * @param nouvelle_case La Case qui va remplacer celle qui se trouve au point p dans le tableau de Case.
+     */
+    public void setTabCases(@NotNull Point p, Case nouvelle_case) {tabCases[p.x][p.y] = nouvelle_case;}
+
+    /**
+     *
+     * @param i La ligne où se trouve la case que l'on veut changer.
+     * @param j La colonne où se trouve la case que l'on veut changer.
+     * @param nouvelle_case La Case qui va remplace celle qui se trouve au point p dans le tableau de Case.
+     */
+    public void setTabCases(int i, int j, Case nouvelle_case) {tabCases[i][j] = nouvelle_case;}
+    public void setTabCases(Case ancienne_case, Case nouvelle_case) {
+        Point p = IndexCase.get(ancienne_case);
+        setTabCases(p, nouvelle_case);
+    }
+
+    /**
+     * Mutateur qui s'occupe de supprimer la case que l'on veut changer dans la hashmap et la remet avec une nouvelle valeur.
+     * @param c Case que l'on veut changer.
+     * @param nouvelle_valeur Entier qui représente la nouvelle valeur de la case.
+     */
+    public void setIndexCase(Case c, int nouvelle_valeur) {
+        // On récupère les anciennes données de la case à savoir ces coordonnées et son identifiant.
+        Point coordo_case = IndexCase.get(c);
+        int id_case = c.getID();
+        // On créer une nouvelle case avec la nouvelle valeur et son ancien id.
+        Case nouvelle_case = new Case(nouvelle_valeur, id_case);
+        // On a décidé de faire une suppression puis de remettre la Case avec ces nouvelles données dans la Hahsmap.
+        IndexCase.remove(c);
+        IndexCase.put(nouvelle_case, coordo_case);
+        // Autre version possible apparemment plus optimisé : map.put( nouvelle_case, map.remove(case_aleatoire) );
+    }
+
+    /**
+     * Mutateur qui remplace l'ancienne case par la nouvelle passé en paramètre.
+     * @param c Ancienne case que l'on veut remplacer.
+     * @param nouvelle_case La nouvelle case avec une valeur différente.
+     */
+    public void setIndexCase(Case c, Case nouvelle_case) {
+        // Les coordonnées de la case reste la même on change seulement sa valeur.
+        Point coordo_case = IndexCase.get(c);
+        IndexCase.remove(c);
+        IndexCase.put(nouvelle_case, coordo_case);
     }
 
 }

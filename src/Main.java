@@ -2,11 +2,15 @@ import modele.Jeu;
 import vue_controleur.Console2048;
 import vue_controleur.Swing2048;
 
+import java.util.Arrays;
+import java.util.function.Function;
+
 public class Main {
 
     public static void main(String[] args) {
         //mainConsole();
         mainSwing();
+
     }
 
     public static void mainConsole() {
