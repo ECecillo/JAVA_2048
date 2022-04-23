@@ -102,9 +102,12 @@ public class Swing2048 extends JFrame implements Observer {
      * Correspond à la fonctionnalité de Contrôleur : écoute les évènements, et déclenche des traitements sur le modèle
      */
     private void ajouterEcouteurClavier() {
-        for(int i = 0; i < 4; i++) {
+        // For testing.
+        /*for(int i = 0; i < 4; i++) {
             jeu.setTabCases(1,i,2);
-        }
+        }*/
+        jeu.ajoute_nombre_aleatoire();
+        jeu.ajoute_nombre_aleatoire();
         addKeyListener(new KeyAdapter() { // new KeyAdapter() { ... } est une instance de classe anonyme, il s'agit d'un objet qui correspond au controleur dans MVC
             @Override
             public void keyPressed(KeyEvent e) {

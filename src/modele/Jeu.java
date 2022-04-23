@@ -97,9 +97,9 @@ public class Jeu extends Observable {
         }
         // On a fini de déplacer toutes les Cases entre elles on va pouvoir ajouter 2 nouvelles valeurs dans le jeu.
         // Flemme de faire des copier-coller en plus on peut être amené à en générer plus donc on aura juste à changer le 2.
-        /*for (int i = 0; i < 2; i++) {
+        for (int i = 0; i < 2; i++) {
             ajoute_nombre_aleatoire();
-        }*/
+        }
     }
 
     public static boolean checkInBound(int value, int upperBound, int lowerBound) {
