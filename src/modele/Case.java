@@ -2,8 +2,6 @@ package modele;
 
 import java.awt.*;
 import java.util.Objects;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class Case {
     private int valeur;
@@ -35,7 +33,7 @@ public class Case {
     }
 
     // Fonction qui permet de retourner un index pour la Hashmap.
-    @Override
+    /*@Override
     public int hashCode() {
         // Règle 1 : 2 objets égaux doivent avoir le même Hashcode.
         // Règle 2 : 2 objets différent peuvent avoir le même hashCode, il faut alors
@@ -48,7 +46,7 @@ public class Case {
         // Note : Si on a plusieurs tableau on risque d'avoir un Hashcode égale il faut
         // donc gérer.
         return res;
-    }
+    }*/
 
 
     /* move
@@ -139,7 +137,8 @@ public class Case {
     private void fusion(Point voisin, Point moi, Jeu grille) {
         Case case_voisin = grille.getCase(voisin);
         int valeur_voisin = grille.getCase(voisin).getValeur();
-        if(this.equals(case_voisin)) {
+
+        if(this.valeur == valeur_voisin) {
             // Cas : Ma valeur est égale à celle de mon voisin, on fusionne et je passe à 0. exemple ( 2 * 2).
             change_cases(grille,case_voisin, this, valeur_voisin*this.valeur, 0);
         }
@@ -154,7 +153,7 @@ public class Case {
 
     public void deplacer(Point voisin, Jeu grille) {
         Point mesCoordonnees = grille.getCaseFromHash(this); // Je récupère mes coordonnées depuis la hashmap.
-        int valeur_voisin = grille.getCase(voisin).getValeur();
+        //System.out.println(mesCoordonnees);
         // Si je ne suis pas égale à 0 je dois transmettre ma valeur ou fusionner avec voisin
         if(!(this.valeur == 0)) {
             fusion(voisin,mesCoordonnees, grille);
