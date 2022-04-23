@@ -1,8 +1,10 @@
 package vue_controleur;
 
+
 import modele.Case;
 import modele.Direction;
 import modele.Jeu;
+import modele.constants.Constants;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -12,6 +14,9 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.HashMap;
+
+import static modele.constants.Constants.*;
+
 import java.util.Observable;
 import java.util.Observer;
 
@@ -29,7 +34,7 @@ public class Swing2048 extends JFrame implements Observer {
         // Fonction qui s'occupe de terminer la fenêtre lorsque l'on appuie sur un bouton fermer.
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         // Définie la taille de la JFrame en fonction de la taille de la fenêtre ().
-        setSize(jeu.getSize() * PIXEL_PER_SQUARE, jeu.getSize() * PIXEL_PER_SQUARE);
+        setSize(500, 500);
 
         // JLabel : Composant permettant d'afficher du texte ou une image.
         // On alloue dans la mémoire un tableau 2D de Type JLabel.
@@ -40,6 +45,7 @@ public class Swing2048 extends JFrame implements Observer {
         JPanel contentPane = new JPanel(new GridLayout(jeu.getSize(), jeu.getSize()));
         // Défini le placement des fils en gridLayout.
 
+        setGameBackground(contentPane, BACKGROUND_COLOR);
         for (int i = 0; i < jeu.getSize(); i++) {
             for (int j = 0; j < jeu.getSize(); j++) {
                 // On créer un objet Bordure en utilisant l'interface Border, ici on utilisera la méthode createLineBorder pour avoir un LineBorder. 
@@ -47,31 +53,78 @@ public class Swing2048 extends JFrame implements Observer {
                 Border border = BorderFactory.createLineBorder(Color.darkGray, 5);
                 // Dans chaque case du tableau on stock on composant JLabel.
                 tabC[i][j] = new JLabel();
+
                 // On défini pour ce composant une bordure avec setBorder.
                 tabC[i][j].setBorder(border);
                 // On définie l'alignement du composant pour qu'il soit au centre. 
                 tabC[i][j].setHorizontalAlignment(SwingConstants.CENTER);
-
-
+                setFont(tabC[i][j]);
+                setTextColor(tabC[i][j], COLOR_VALUE_LIGHT);
                 contentPane.add(tabC[i][j]);
 
             }
         }
         // On remplace le ContentPane par notre Content pane que l'on vient de créer.
-        setContentPane(contentPane); 
+        setContentPane(contentPane);
         ajouterEcouteurClavier();
         // Récupère les informations dans le tableau Jeu et met dans les labels du texte.
         rafraichir();
 
     }
 
+    private void setFont(JLabel label) {
+        label.setFont(new Font("Arial Bold", Font.PLAIN, 64));
+    }
 
+    private void setTextColor(JLabel label, Color color) {
+        label.setForeground(color);
+    }
 
+    private void setGameBackground(JPanel label, Color color) {
+        label.setBackground(color);
+        label.setOpaque(true);
+    }
+
+    /**
+     * Fonction qui s'occupe de changer la couleur de fond du JLabel passé en paramètre avec la couleur.
+     *
+     * @param label Label dont on veut changer la couleur.
+     * @param color Couleur que l'on veut appliquer sur ce dernier.
+     */
+    private void setTextBackgroundColor(JLabel label, Color color) {
+        label.setBackground(color);
+        label.setOpaque(true);
+    }
+
+    /**
+     * Fonction qui selon la valeur d'une case va mettre une couleur de fond pour le JLabel passé en paramètre.
+     *
+     * @param label JLabel dont on veut set la couleur de fond.
+     * @param value La valeur de la case que l'on regarde.
+     */
+    private void changeTextBackground(JLabel label, int value) {
+        switch (value) {
+            case 0 -> setTextBackgroundColor(label, BACKGROUND_COLOR);
+            case 2 -> setTextBackgroundColor(label, COLOR_2);
+            case 4 -> setTextBackgroundColor(label, COLOR_4);
+            case 8 -> setTextBackgroundColor(label, COLOR_8);
+            case 16 -> setTextBackgroundColor(label, COLOR_16);
+            case 32 -> setTextBackgroundColor(label, COLOR_32);
+            case 64 -> setTextBackgroundColor(label, COLOR_64);
+            case 128 -> setTextBackgroundColor(label, COLOR_128);
+            case 256 -> setTextBackgroundColor(label, COLOR_256);
+            case 512 -> setTextBackgroundColor(label, COLOR_512);
+            case 1024 -> setTextBackgroundColor(label, COLOR_1024);
+            case 2048 -> setTextBackgroundColor(label, COLOR_2048);
+        }
+        if (value > 2048)
+            setTextBackgroundColor(label, COLOR_OTHER);
+    }
 
     /**
      * Correspond à la fonctionnalité de Vue : affiche les données du modèle
      */
-    private void rafraichir()  {
+    private void rafraichir() {
 
         // On passe en paramètre de InvokeLater une classe anonyme.
         SwingUtilities.invokeLater(new Runnable() { // demande au processus graphique de réaliser le traitement
@@ -82,14 +135,12 @@ public class Swing2048 extends JFrame implements Observer {
                         Case c = jeu.getCase(i, j);
                         // Si la case du tableau est null on affiche une case avec un texte vide.
                         if (c == null || c.getValeur() == 0) {
-
                             tabC[i][j].setText("");
-
+                            changeTextBackground(tabC[i][j], 0);
                         } else {
-                            tabC[i][j].setText(c.getValeur() + ""); // On lui met une valeur 2 , 4 .... 
+                            tabC[i][j].setText(c.getValeur() + ""); // On lui met une valeur 2 , 4 ....
+                            changeTextBackground(tabC[i][j], c.getValeur());
                         }
-
-
                     }
                 }
             }
@@ -111,11 +162,19 @@ public class Swing2048 extends JFrame implements Observer {
         addKeyListener(new KeyAdapter() { // new KeyAdapter() { ... } est une instance de classe anonyme, il s'agit d'un objet qui correspond au controleur dans MVC
             @Override
             public void keyPressed(KeyEvent e) {
-                switch(e.getKeyCode()) {  // on regarde quelle touche a été pressée
-                    case KeyEvent.VK_LEFT : jeu.monTest(Direction.gauche); break; // A changer, car ici à chaque case que l'on appuie on génère une nouvelle classe.
-                    case KeyEvent.VK_RIGHT : jeu.monTest(Direction.droite); break;
-                    case KeyEvent.VK_DOWN : jeu.monTest(Direction.bas); break;
-                    case KeyEvent.VK_UP : jeu.monTest(Direction.haut); break;
+                switch (e.getKeyCode()) {  // on regarde quelle touche a été pressée
+                    case KeyEvent.VK_LEFT:
+                        jeu.monTest(Direction.gauche);
+                        break; // A changer, car ici à chaque case que l'on appuie on génère une nouvelle classe.
+                    case KeyEvent.VK_RIGHT:
+                        jeu.monTest(Direction.droite);
+                        break;
+                    case KeyEvent.VK_DOWN:
+                        jeu.monTest(Direction.bas);
+                        break;
+                    case KeyEvent.VK_UP:
+                        jeu.monTest(Direction.haut);
+                        break;
                 }
             }
         });
