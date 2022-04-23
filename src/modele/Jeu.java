@@ -46,7 +46,7 @@ public class Jeu extends Observable {
                 colonne_end = this.getSize(), ligne_end = this.getSize(); // On a également besoin de savoir jusqu'où on va.
         switch (direction) {
             case haut -> {
-                ligne_start = ((this.getSize()-1)*-1); // On part de la ligne 3.
+                ligne_start = (this.getSize()*-1); // On part de la ligne 3.
                 direction_ligne = -1; // On décrémente.
                 ligne_end = 0; // jusqu'à 0.
             }
@@ -56,7 +56,7 @@ public class Jeu extends Observable {
                 direction_ligne = 1;
             }
             case gauche -> {
-                colonne_start = ((this.getSize()-1)*-1); // On part de la dernière colonne.
+                colonne_start = (this.getSize()*-1); // On part de la dernière colonne.
                 direction_colonne = -1; // On décrémente la colonne de -1.
                 colonne_end = 0; // Jusqu'à 0.
             }
@@ -66,30 +66,33 @@ public class Jeu extends Observable {
                 direction, direction_ligne, direction_colonne);
         System.out.println("On commence à la ligne d'indice " + Math.abs(ligne_start) + " et de colonne " + Math.abs(colonne_start));
         System.out.println("On fini à la ligne " + Math.abs(ligne_end) + " et colonne " + Math.abs(colonne_end));
+
+        System.out.println(IndexCase);
         // Pour chacune des cases on va appeler leur fonction déplace qui va s'occuper de gérer leur changement de valeur.
-        for (int i = ligne_start; Math.abs(i) < ligne_end; i++) {
-            for (int j = colonne_start; Math.abs(j) < colonne_end; j++) {
+        for (int i = ligne_start; i < ligne_end; i++) {
+            for (int j = colonne_start; j < colonne_end; j++) {
                 // Pour les directions haut et gauche, ligne_start et colonne sont négatifs.
                 // Afin d'éviter un problème d'indice on les reconverties en nombre positif.
-                int absolute_i = Math.abs(i);
-                int absolute_j = Math.abs(j);
+                int absolute_i = i < 0 ? Math.abs(i + 1) : i;
+                int absolute_j = j < 0 ? Math.abs(j + 1) : j;
 
-                int index_i_voisin = ligne_start + direction_ligne;
-                int index_j_voisin = colonne_start + direction_colonne;
+                int index_i_voisin = absolute_i + direction_ligne;
+                int index_j_voisin = absolute_j + direction_colonne;
                 // Si la case voisine est bien dans la grille, on peut faire l'échange avec la case (i,j).
-                /*if(!((index_i_voisin > tabCases.length || index_i_voisin < 0)
-                        || (index_j_voisin > tabCases.length || index_j_voisin < 0))) {
+                if(!((index_i_voisin > (tabCases.length - 1) || index_i_voisin < 0)
+                        || (index_j_voisin > (tabCases.length - 1) || index_j_voisin < 0))) {
                     // On demande à la case [i][j] de se déplacer avec sa case voisine aux coordonnées [index_i_voisin][index_j_voisin].
+                    System.out.println("La valeur est i est : " + absolute_i + " et la valeur j est : " + absolute_j);
+                    System.out.println("La valeur i du voisin : " + index_i_voisin + " et son j est : " + index_j_voisin);
 
-                    Point voisin = IndexCase.get(tabCases[index_i_voisin][index_j_voisin]);
-                    tabCases[i][j].deplacer(voisin, this);
+                    Point voisin = new Point(index_i_voisin, index_j_voisin);
+                    //System.out.println(voisin);
                     //afficheCoordonnees(voisin);
+                    tabCases[absolute_i][absolute_j].deplacer(voisin, this);
                 }
                 else {
                     System.out.format("Skipping ligne %s et colonne %s \n", i,j);
-                }*/
-                System.out.println("La valeur est i est : " + absolute_i + " et la valeur j est : " + absolute_j);
-                System.out.println("La valeur i du voisin : " + index_i_voisin + " et son j est : " + index_j_voisin);
+                }
             }
         }
         // On a fini de déplacer toutes les Cases entre elles on va pouvoir ajouter 2 nouvelles valeurs dans le jeu.
@@ -108,17 +111,20 @@ public class Jeu extends Observable {
      * @param p Point dont on veut voir les coordonnées.
      */
     public static void afficheCoordonnees(Point p) {
-        System.out.format("\nX : %s \nY : %s \n", p.getX(), p.getY());
+        System.out.format("\nX : %s \nY : %s \n", p.x, p.y);
     }
     public void monTest(Direction direction) {
-        new Thread(() -> {
-            action(direction);
-        }).start();
-        // Notification de la vue, suite à la mise à jour du champ lastValue.
-        setChanged();
-        // Va appeler la méthode update dans le Swing2048 (Vue) pour mettre à jour
-        // l'affichage Graphique.
-        notifyObservers();
+        new Thread () {
+            public void run() {
+                action(direction);
+                // Notification de la vue, suite à la mise à jour du champ lastValue.
+                setChanged();
+                // Va appeler la méthode update dans le Swing2048 (Vue) pour mettre à jour
+                // l'affichage Graphique.
+                notifyObservers();
+            }
+        }.start();
+
     }
     /**
      * @param row : Ligne du tableau.
