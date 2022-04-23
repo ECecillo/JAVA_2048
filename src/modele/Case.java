@@ -140,7 +140,7 @@ public class Case {
 
         if(this.valeur == valeur_voisin) {
             // Cas : Ma valeur est égale à celle de mon voisin, on fusionne et je passe à 0. exemple ( 2 * 2).
-            change_cases(grille,case_voisin, this, valeur_voisin*this.valeur, 0);
+            change_cases(grille,case_voisin, this, valeur_voisin+this.valeur, 0);
         }
         else if(this.valeur != 0 && valeur_voisin == 0) {
             // Cas : Ma valeur est ¬null et mon voisin est null, je recopie ma valeur dans celle du voisin et je passe à 0.
