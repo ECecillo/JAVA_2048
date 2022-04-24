@@ -1,7 +1,5 @@
 package modele;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.util.*;
 import java.awt.Point;
 
@@ -37,49 +35,55 @@ public class Jeu extends Observable {
 
     /**
      * Fonction de Controle qui va s'occuper d'appeler toutes les cases pour qu'ellle s'échange ou fusionne leur valeur.
+     *
      * @param direction Direction vers laquelle les cases vont devoir s'interchanger ou fusionner.
      */
     public void action(Direction direction) {
-        // Selon la direction demandé par l'utilisateur,
-        int direction_colonne = 0, direction_ligne = 0, // Indique dans quelle sens on va incrémenter nos index.
-                colonne_start = 0, ligne_start = 0, // Si on va vers le haut ou gauche on part des extrémités.
-                colonne_end = this.getSize(), ligne_end = this.getSize(); // On a également besoin de savoir jusqu'où on va.
+        int direction_colonne = 0, // Indiquera si on doit regarder la case à côté de notre case [i][j]
+                direction_ligne = 0, // Indiquera si on doit regarder la case en dessous de notre [i][j].
+                colonne_start = 0, // Indiquera à partir de quelle colonne on commence notre boucle.
+                ligne_start = 0, // ... à partir de quelle ligne on commence.
+                colonne_end = this.getSize(), // Jusqu'où on va s'arrêter.
+                ligne_end = this.getSize(); // On a également besoin de savoir jusqu'où on va.
         switch (direction) {
             case haut -> {
-                ligne_start = (this.getSize()*-1); // On part de la ligne 3.
+                ligne_start = (this.getSize() * -1) + 1; // On part de la ligne 3.
                 direction_ligne = -1; // On décrémente.
                 ligne_end = 0; // jusqu'à 0.
             }
             // On part de la colonne et ligne 0 et on incrémente jusqu'à la taille de la grille.
             case droite -> direction_colonne = 1;
-            case bas -> {
-                direction_ligne = 1;
-            }
+            case bas -> direction_ligne = 1;
             case gauche -> {
-                colonne_start = (this.getSize()*-1); // On part de la dernière colonne.
+                colonne_start = (this.getSize() * -1) + 1; // On part de la dernière colonne.
                 direction_colonne = -1; // On décrémente la colonne de -1.
                 colonne_end = 0; // Jusqu'à 0.
             }
             default -> throw new IllegalStateException("Cette direction n'existe pas.");
         }
-        System.out.format("Nous allons nous déplacer vers %s \nDonc i est égale à %s\nEt j est égale à %s\n",
-                direction, direction_ligne, direction_colonne);
-        System.out.println("On commence à la ligne d'indice " + Math.abs(ligne_start) + " et de colonne " + Math.abs(colonne_start));
-        System.out.println("On fini à la ligne " + Math.abs(ligne_end) + " et colonne " + Math.abs(colonne_end));
+        //System.out.format("Nous allons nous déplacer vers %s \nDonc i est égale à %s\nEt j est égale à %s\n",
+        //direction, direction_ligne, direction_colonne);
+        //System.out.println("On commence à la ligne d'indice " + Math.abs(ligne_start) + " et de colonne " + Math.abs(colonne_start));
+        //System.out.println("On fini à la ligne " + Math.abs(ligne_end) + " et colonne " + Math.abs(colonne_end));
 
-        System.out.println(IndexCase);
+        //System.out.println(IndexCase);
         // Pour chacune des cases on va appeler leur fonction déplace qui va s'occuper de gérer leur changement de valeur.
         for (int i = ligne_start; i < ligne_end; i++) {
             for (int j = colonne_start; j < colonne_end; j++) {
                 // Pour les directions haut et gauche, ligne_start et colonne sont négatifs.
                 // Afin d'éviter un problème d'indice on les reconverties en nombre positif.
-                int absolute_i = i < 0 ? Math.abs(i + 1) : i;
-                int absolute_j = j < 0 ? Math.abs(j + 1) : j;
+                //int absolute_i = i < 0 ? Math.abs(i) : i;
+                //int absolute_j = j < 0 ? Math.abs(j) : j;
+                int absolute_i = Math.abs(i);
+                int absolute_j = Math.abs(j);
+
 
                 int index_i_voisin = absolute_i + direction_ligne;
                 int index_j_voisin = absolute_j + direction_colonne;
+
+
                 // Si la case voisine est bien dans la grille, on peut faire l'échange avec la case (i,j).
-                if(!((index_i_voisin > (tabCases.length - 1) || index_i_voisin < 0)
+                if (!((index_i_voisin > (tabCases.length - 1) || index_i_voisin < 0)
                         || (index_j_voisin > (tabCases.length - 1) || index_j_voisin < 0))) {
                     // On demande à la case [i][j] de se déplacer avec sa case voisine aux coordonnées [index_i_voisin][index_j_voisin].
                     System.out.println("La valeur est i est : " + absolute_i + " et la valeur j est : " + absolute_j);
@@ -89,17 +93,14 @@ public class Jeu extends Observable {
                     //System.out.println(voisin);
                     //afficheCoordonnees(voisin);
                     tabCases[absolute_i][absolute_j].deplacer(voisin, this);
-                }
-                else {
-                    System.out.format("Skipping ligne %s et colonne %s \n", i,j);
+                } else {
+                    System.out.format("Skipping ligne %s et colonne %s \n", i, j);
                 }
             }
         }
         // On a fini de déplacer toutes les Cases entre elles on va pouvoir ajouter 2 nouvelles valeurs dans le jeu.
         // Flemme de faire des copier-coller en plus on peut être amené à en générer plus donc on aura juste à changer le 2.
-        for (int i = 0; i < 2; i++) {
-            ajoute_nombre_aleatoire();
-        }
+        ajoute_nombre_aleatoire();
     }
 
     public static boolean checkInBound(int value, int upperBound, int lowerBound) {
@@ -108,13 +109,15 @@ public class Jeu extends Observable {
 
     /**
      * Procédure qui affiche les coordonnées d'un point passé en paramètre.
+     *
      * @param p Point dont on veut voir les coordonnées.
      */
     public static void afficheCoordonnees(Point p) {
         System.out.format("\nX : %s \nY : %s \n", p.x, p.y);
     }
+
     public void monTest(Direction direction) {
-        new Thread () {
+        new Thread() {
             public void run() {
                 action(direction);
                 // Notification de la vue, suite à la mise à jour du champ lastValue.
@@ -126,11 +129,12 @@ public class Jeu extends Observable {
         }.start();
 
     }
+
     /**
      * @param row : Ligne du tableau.
-     * Tableau 1D de case où les valeurs égales à 0 ou null sont à droite.
+     *            Tableau 1D de case où les valeurs égales à 0 ou null sont à droite.
      */
-    private void slide (Case[] row) {
+    private void slide(Case[] row) {
         int i = 0;
         System.out.println("Hello there " + IndexCase.get(row[0]));
         for (int j = row.length - 1; j > 0; j--) {
@@ -143,10 +147,10 @@ public class Jeu extends Observable {
              * Si j <= i on arrête, car on a trié le tout.
              * Complexité O(n) -> pas ouf.
              */
-            if(j <= i ) {
+            if (j <= i) {
                 break;
             }
-            if((row[i].getValeur() == 0 || row[i] == null)
+            if ((row[i].getValeur() == 0 || row[i] == null)
                     && (row[j].getValeur() != 0 || row[j] != null)) {
                 Case swap = row[i]; // Case Null.
                 row[i] = row[j]; // On met celle avec une Valeur dans la non null.
@@ -168,7 +172,6 @@ public class Jeu extends Observable {
     }
 
     /**
-     *
      * @param array : Tableau / Object 2D dont on veut extraire la colonne.
      * @param index : La colonne que l'on veut extraire du tableau 2D.
      * @return Un Tableau qui contient les éléments de la colonne que l'on a passé en paramètre.
@@ -180,6 +183,7 @@ public class Jeu extends Observable {
         }
         return column;
     }
+
     // Nous permettra de savoir ce qui se passe dans le tableau de Jeu.
     public void Debug_Jeu() {
         // On récupère chaque clés de la HashMap et on les stocks dans un Set.
@@ -230,7 +234,7 @@ public class Jeu extends Observable {
     }
 
     public synchronized void ajoute_nombre_aleatoire() {
-        if(case_dispo <= 0) {
+        if (case_dispo <= 0) {
             System.out.println("Le Jeu est plein on ne peut plus continuer.");
             // Pour le moment on arrête le jeu, on devra changer par une fonction qui s'occupe de gérer la fin du jeu.
         }
@@ -272,6 +276,7 @@ public class Jeu extends Observable {
 
     /**
      * Fonction qui appel la méthode static dans Case pour comparer 2 case entre elle.
+     *
      * @param case1 Case source.
      * @param case2 Case que l'on va comparer.
      * @throws Exception
@@ -362,7 +367,6 @@ public class Jeu extends Observable {
     // Accesseur et Mutateur.
 
     /**
-     *
      * @return Récupère la taille du tableau.
      */
     public int getSize() {
@@ -370,7 +374,6 @@ public class Jeu extends Observable {
     }
 
     /**
-     *
      * @param i entier qui correspond à la ligne dans le tableau de jeu.
      * @param j entier qui correspond à la colonne.
      * @return La Case qui sont à la ligne i et la colonne j.
@@ -380,7 +383,6 @@ public class Jeu extends Observable {
     }
 
     /**
-     *
      * @param p Point qui correspond aux coordonnées d'une case.
      * @return La Case qui correspond à ces coordonnées.
      */
@@ -389,9 +391,8 @@ public class Jeu extends Observable {
     }
 
     /**
-     *
-     * @param i La ligne où se trouve la case que l'on veut changer.
-     * @param j La colonne où se trouve la case que l'on veut changer.
+     * @param i               La ligne où se trouve la case que l'on veut changer.
+     * @param j               La colonne où se trouve la case que l'on veut changer.
      * @param nouvelle_valeur La nouvelle valeur de cette case.
      */
     public void setTabCases(int i, int j, int nouvelle_valeur) {
@@ -399,8 +400,7 @@ public class Jeu extends Observable {
     }
 
     /**
-     *
-     * @param p Coordonnées d'une case où x et y sont les i et j.
+     * @param p               Coordonnées d'une case où x et y sont les i et j.
      * @param nouvelle_valeur Nouvelle valeur de la Case qui se trouve dans le tableau de Case.
      */
     public void setTabCases(Point p, int nouvelle_valeur) {
@@ -408,19 +408,22 @@ public class Jeu extends Observable {
     }
 
     /**
-     *
-     * @param p Coordonnées de la case que l'on veut changer.
+     * @param p             Coordonnées de la case que l'on veut changer.
      * @param nouvelle_case La Case qui va remplacer celle qui se trouve au point p dans le tableau de Case.
      */
-    public void setTabCases(@NotNull Point p, Case nouvelle_case) {tabCases[p.x][p.y] = nouvelle_case;}
+    public void setTabCases(Point p, Case nouvelle_case) {
+        tabCases[p.x][p.y] = nouvelle_case;
+    }
 
     /**
-     *
-     * @param i La ligne où se trouve la case que l'on veut changer.
-     * @param j La colonne où se trouve la case que l'on veut changer.
+     * @param i             La ligne où se trouve la case que l'on veut changer.
+     * @param j             La colonne où se trouve la case que l'on veut changer.
      * @param nouvelle_case La Case qui va remplace celle qui se trouve au point p dans le tableau de Case.
      */
-    public void setTabCases(int i, int j, Case nouvelle_case) {tabCases[i][j] = nouvelle_case;}
+    public void setTabCases(int i, int j, Case nouvelle_case) {
+        tabCases[i][j] = nouvelle_case;
+    }
+
     public void setTabCases(Case ancienne_case, Case nouvelle_case) {
         Point p = IndexCase.get(ancienne_case);
         setTabCases(p, nouvelle_case);
@@ -428,7 +431,8 @@ public class Jeu extends Observable {
 
     /**
      * Mutateur qui s'occupe de supprimer la case que l'on veut changer dans la hashmap et la remet avec une nouvelle valeur.
-     * @param c Case que l'on veut changer.
+     *
+     * @param c               Case que l'on veut changer.
      * @param nouvelle_valeur Entier qui représente la nouvelle valeur de la case.
      */
     public void setIndexCase(Case c, int nouvelle_valeur) {
@@ -445,7 +449,8 @@ public class Jeu extends Observable {
 
     /**
      * Mutateur qui remplace l'ancienne case par la nouvelle passé en paramètre.
-     * @param c Ancienne case que l'on veut remplacer.
+     *
+     * @param c             Ancienne case que l'on veut remplacer.
      * @param nouvelle_case La nouvelle case avec une valeur différente.
      */
     public void setIndexCase(Case c, Case nouvelle_case) {

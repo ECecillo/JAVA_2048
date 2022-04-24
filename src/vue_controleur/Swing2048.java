@@ -34,7 +34,11 @@ public class Swing2048 extends JFrame implements Observer {
         // Fonction qui s'occupe de terminer la fenêtre lorsque l'on appuie sur un bouton fermer.
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         // Définie la taille de la JFrame en fonction de la taille de la fenêtre ().
-        setSize(500, 500);
+        setSize(500, 625);
+        this.setBackground(BACKGROUND_COLOR);
+        this.setLocationRelativeTo(null);
+        this.setFocusable(true);
+        this.requestFocus();
 
         // JLabel : Composant permettant d'afficher du texte ou une image.
         // On alloue dans la mémoire un tableau 2D de Type JLabel.
@@ -42,13 +46,35 @@ public class Swing2048 extends JFrame implements Observer {
 
         // Un Pane est associé à un JFrame, ce dernier est soit un contentPane soit un menuPane.
         // Un pane sera a son tour affecté à un Layout Manager pour dire comment le Pane se comporte dans la JFrame.
-        JPanel contentPane = new JPanel(new GridLayout(jeu.getSize(), jeu.getSize()));
-        // Défini le placement des fils en gridLayout.
+        JPanel content = (JPanel) this.getContentPane();
+        setPanelBackground(content, Color.BLACK);
 
-        setGameBackground(contentPane, BACKGROUND_COLOR);
+        JPanel grille = createGrilleJeu();
+        grille.setPreferredSize(new Dimension(375,0));
+        JPanel panneauLateral = createSidePannel();
+        panneauLateral.setPreferredSize(new Dimension(0, 75));
+
+        // On ajoute les pannels dans notre container content.
+        content.add(grille, BorderLayout.CENTER);
+        content.add(panneauLateral, BorderLayout.NORTH);
+
+        // On remplace le ContentPane par notre Content pane que l'on vient de créer.
+        setContentPane(content);
+        ajouterEcouteurClavier();
+        // Récupère les informations dans le tableau Jeu et met dans les labels du texte.
+        rafraichir();
+    }
+
+    /**
+     * Fonction qui retourne un JPanel qui représente la grille du jeu 2048.
+     * @return JPanel remplis avec des cases colorées.
+     */
+    private JPanel createGrilleJeu() {
+        JPanel contentPane = new JPanel(new GridLayout(jeu.getSize(), jeu.getSize()));
+        setPanelBackground(contentPane, BACKGROUND_COLOR);
         for (int i = 0; i < jeu.getSize(); i++) {
             for (int j = 0; j < jeu.getSize(); j++) {
-                // On créer un objet Bordure en utilisant l'interface Border, ici on utilisera la méthode createLineBorder pour avoir un LineBorder. 
+                // On créer un objet Bordure en utilisant l'interface Border, ici on utilisera la méthode createLineBorder pour avoir un LineBorder.
                 // Factory : Design patern qui permet de créer un nouvelle objet à partir d'une interface (ici BorderFactory)
                 Border border = BorderFactory.createLineBorder(Color.darkGray, 5);
                 // Dans chaque case du tableau on stock on composant JLabel.
@@ -56,31 +82,58 @@ public class Swing2048 extends JFrame implements Observer {
 
                 // On défini pour ce composant une bordure avec setBorder.
                 tabC[i][j].setBorder(border);
-                // On définie l'alignement du composant pour qu'il soit au centre. 
+                // On définie l'alignement du composant pour qu'il soit au centre.
                 tabC[i][j].setHorizontalAlignment(SwingConstants.CENTER);
-                setFont(tabC[i][j]);
+                setFont(tabC[i][j], "Bold", 64);
                 setTextColor(tabC[i][j], COLOR_VALUE_LIGHT);
                 contentPane.add(tabC[i][j]);
-
             }
         }
-        // On remplace le ContentPane par notre Content pane que l'on vient de créer.
-        setContentPane(contentPane);
-        ajouterEcouteurClavier();
-        // Récupère les informations dans le tableau Jeu et met dans les labels du texte.
-        rafraichir();
-
+        return contentPane;
     }
 
-    private void setFont(JLabel label) {
-        label.setFont(new Font("Arial Bold", Font.PLAIN, 64));
+    /**
+     * Créer le composant JPanel qui nous permettra d'afficher le titre, le score, le meilleur score et rejouer.
+     * @return
+     */
+    private JPanel createSidePannel() {
+        JPanel sidePan = new JPanel(new GridLayout(1, 3));
+        setPanelBackground(sidePan, WINDOW_BACKGROUND);
+
+        JLabel title = createText("2048", SwingConstants.LEFT, COLOR_VALUE_LIGHT,"Bold", 54);
+        JLabel score = createText("0", SwingConstants.CENTER, COLOR_VALUE_LIGHT,"Bold", 24);
+        JLabel meilleurScore = createText("0", SwingConstants.CENTER, COLOR_VALUE_LIGHT,"Bold", 24);
+
+        JButton rejouer = new JButton("Rejouer");
+
+        sidePan.add(title);
+        sidePan.add(score);
+        sidePan.add(meilleurScore);
+        sidePan.add(rejouer);
+
+        return sidePan;
+    }
+
+    private JLabel createText(String text, int alignement,Color color, String style, int size) {
+        JLabel textResult = new JLabel(text);
+        if(!(alignement == 0)) {
+            textResult.setHorizontalAlignment(alignement);
+        }
+        setTextColor(textResult, color);
+        setFont(textResult, style, size);
+
+        return textResult;
+    }
+
+    private void setFont(JLabel label, String style,int size) {
+        label.setFont(new Font("Arial " + style, Font.PLAIN, size));
     }
 
     private void setTextColor(JLabel label, Color color) {
         label.setForeground(color);
     }
 
-    private void setGameBackground(JPanel label, Color color) {
+    private void setPanelBackground(JPanel label, Color color) {
         label.setBackground(color);
         label.setOpaque(true);
     }
@@ -162,6 +215,8 @@ public class Swing2048 extends JFrame implements Observer {
         addKeyListener(new KeyAdapter() { // new KeyAdapter() { ... } est une instance de classe anonyme, il s'agit d'un objet qui correspond au controleur dans MVC
             @Override
             public void keyPressed(KeyEvent e) {
+                System.out.println("Hello there");
+
                 switch (e.getKeyCode()) {  // on regarde quelle touche a été pressée
                     case KeyEvent.VK_LEFT:
                         jeu.monTest(Direction.gauche);

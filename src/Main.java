@@ -30,8 +30,6 @@ public class Main {
         jeu.addObserver(vue);
         // On affiche.
         vue.setVisible(true);
-
-
     }
 
 
