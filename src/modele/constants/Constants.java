@@ -8,6 +8,7 @@ public final class Constants {
         // restrict instantiation
     }
 
+    public static final Color WINDOW_BACKGROUND = new Color(143, 112, 82);
     public static final Color BACKGROUND_COLOR = new Color(117, 99, 82);
     public static final Color COLOR_EMPTY = new Color(204, 192, 179);
     public static final Color COLOR_2 = new Color(74, 53, 30);
