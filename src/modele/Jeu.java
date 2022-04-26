@@ -1,11 +1,15 @@
 package modele;
 
-import org.jetbrains.annotations.NotNull;
+//import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
+import java.util.List;
 import java.util.*;
-import java.awt.Point;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-public class Jeu extends Observable {
+public class Jeu extends Observable implements Executor {
 
     // C'est le tableau que l'on utilise pour appliquer des opérations sur le Jeu.
     private Case[][] tabCases;
@@ -97,9 +101,12 @@ public class Jeu extends Observable {
         }
         // On a fini de déplacer toutes les Cases entre elles on va pouvoir ajouter 2 nouvelles valeurs dans le jeu.
         // Flemme de faire des copier-coller en plus on peut être amené à en générer plus donc on aura juste à changer le 2.
+        /*
         for (int i = 0; i < 2; i++) {
             ajoute_nombre_aleatoire();
         }
+        */
+        ajoute_nombre_aleatoire();
     }
 
     public static boolean checkInBound(int value, int upperBound, int lowerBound) {
@@ -114,17 +121,24 @@ public class Jeu extends Observable {
         System.out.format("\nX : %s \nY : %s \n", p.x, p.y);
     }
     public void monTest(Direction direction) {
-        new Thread () {
+        ExecutorService service = Executors.newSingleThreadExecutor();
+        service.execute(new Runnable() {
+            @Override
             public void run() {
-                action(direction);
+                try
+                {
+                    action(direction);
+                } catch (Exception e) {
+                    System.out.println("Le Jeu est plein on ne peut plus continuer.");
+                }
+
                 // Notification de la vue, suite à la mise à jour du champ lastValue.
                 setChanged();
                 // Va appeler la méthode update dans le Swing2048 (Vue) pour mettre à jour
                 // l'affichage Graphique.
                 notifyObservers();
             }
-        }.start();
-
+        });
     }
     /**
      * @param row : Ligne du tableau.
@@ -229,45 +243,58 @@ public class Jeu extends Observable {
         return listOfKeys;
     }
 
+    // Fonction qui ajoute entre 1 et 2 nombres aléatoire selon le nombre de cases disponibles
     public synchronized void ajoute_nombre_aleatoire() {
-        if(case_dispo <= 0) {
-            System.out.println("Le Jeu est plein on ne peut plus continuer.");
-            // Pour le moment on arrête le jeu, on devra changer par une fonction qui s'occupe de gérer la fin du jeu.
+        int compteur = 1;
+        if(case_dispo == 1)
+        {
+            compteur = 1;
         }
-        case_dispo--;
-        // Opti Possible : Après avoir effectué les déplacements et les fusions on
-        // devrait avoir des valeurs null si on reparcours dans le même sens.
-        // On récupère toutes les clés (cases) qui ont une valeur null.
-        List<Case> liste_case_null = getAllCaseFromValue(0);
-        //System.out.println(liste_case_null);
-        // On stock la taille de la Liste pour ensuite choisir une clé aléatoire dans la
-        // liste.
-        int taille_liste = liste_case_null.size();
-
-        // Génère un index aléatoire.
-        Random rnd = new Random(taille_liste);
-
-        // On choisi une Case aléatoire dans la Liste qui a une valeur Null.
-        Case case_aleatoire = liste_case_null.get(rnd.nextInt(taille_liste));
-        // On récupère les coordonnées de la case à partir de la hashmap pour
-        // pouvoir aussi changer la valeur de la case du tableau.
-        Point coordo_case = IndexCase.get(case_aleatoire);
-        // On doit créer une autre valeur aléatoire pour savoir si on met un 2 ou un 4.
-        Random rnd_value = new Random();
-        // On change la valeur de la case par une valeur aléatoire.
-        float random_value = rnd_value.nextFloat();
-        // On créer une variable qui va stocker notre nouvelle case.
-        Case nouvelle_case = null;
-        // Génère la nouvelle case en fonction de la valeur aléatoire.
-        if (random_value > 0.5) {
-            nouvelle_case = new Case(2, case_aleatoire.getID());
-        } else {
-            nouvelle_case = new Case(4, case_aleatoire.getID());
+        else if(case_dispo > 1)
+        {
+            compteur = 2;
         }
-        // On remplace l'ancienne case dans notre tableau par la nouvelle.
-        setIndexCase(case_aleatoire, nouvelle_case);
-        setTabCases(nouvelle_case, nouvelle_case);
-        // On oublie pas de changer la case dans la HashMap.
+        // Boucle qui ajoute les nombres selon un compteur de cases.
+        while(compteur > 0)
+        {
+            case_dispo--;
+            // Opti Possible : Après avoir effectué les déplacements et les fusions on
+            // devrait avoir des valeurs null si on reparcours dans le même sens.
+            // On récupère toutes les clés (cases) qui ont une valeur null.
+
+            List<Case> liste_case_null = getAllCaseFromValue(0);
+            //System.out.println(liste_case_null);
+            // On stock la taille de la Liste pour ensuite choisir une clé aléatoire dans la
+            // liste.
+            int taille_liste = liste_case_null.size();
+
+            // Génère un index aléatoire.
+            Random rnd = new Random(taille_liste);
+
+            // On choisi une Case aléatoire dans la Liste qui a une valeur Null.
+            Case case_aleatoire = liste_case_null.get(rnd.nextInt(taille_liste));
+            // On récupère les coordonnées de la case à partir de la hashmap pour
+            // pouvoir aussi changer la valeur de la case du tableau.
+            Point coordo_case = IndexCase.get(case_aleatoire);
+            // On doit créer une autre valeur aléatoire pour savoir si on met un 2 ou un 4.
+            Random rnd_value = new Random();
+            // On change la valeur de la case par une valeur aléatoire.
+            float random_value = rnd_value.nextFloat();
+            // On créer une variable qui va stocker notre nouvelle case.
+            Case nouvelle_case = null;
+            // Génère la nouvelle case en fonction de la valeur aléatoire.
+            if (random_value > 0.5) {
+                nouvelle_case = new Case(2, case_aleatoire.getID());
+            } else {
+                nouvelle_case = new Case(4, case_aleatoire.getID());
+            }
+            // On remplace l'ancienne case dans notre tableau par la nouvelle.
+            setIndexCase(case_aleatoire, nouvelle_case);
+            setTabCases(nouvelle_case, nouvelle_case);
+            // On oublie pas de changer la case dans la HashMap.
+            compteur--;
+        }
+
     }
 
     /**
@@ -297,8 +324,10 @@ public class Jeu extends Observable {
     }
 
     public void rnd() { // Processus métier.
-        new Thread() { // permet de libérer le processus graphique ou de la console
-            public void run() { // On définit ce que le thread va faire.
+        ExecutorService service = Executors.newSingleThreadExecutor();
+        service.execute(new Runnable() {
+            @Override
+            public void run() {
                 int r;
                 // On stock la case que l'on est en train de regarder.
                 Case case_actuel;
@@ -347,8 +376,7 @@ public class Jeu extends Observable {
                     e.printStackTrace();
                 }
             }
-
-        }.start();
+        });
 
         // Notification de la vue, suite à la mise à jour du champ lastValue.
         setChanged();
@@ -412,7 +440,7 @@ public class Jeu extends Observable {
      * @param p Coordonnées de la case que l'on veut changer.
      * @param nouvelle_case La Case qui va remplacer celle qui se trouve au point p dans le tableau de Case.
      */
-    public void setTabCases(@NotNull Point p, Case nouvelle_case) {tabCases[p.x][p.y] = nouvelle_case;}
+    public void setTabCases(Point p, Case nouvelle_case) {tabCases[p.x][p.y] = nouvelle_case;}
 
     /**
      *
@@ -455,4 +483,9 @@ public class Jeu extends Observable {
         IndexCase.put(nouvelle_case, coordo_case);
     }
 
+    // La fonction d'execution du pool de processus qui est appelée par l'Executor
+    @Override
+    public void execute(Runnable command) {
+        command.run();
+    }
 }
