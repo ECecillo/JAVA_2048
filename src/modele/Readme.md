@@ -4,6 +4,10 @@
 
 `Case[][]` : Tableau dans lequelle on va modifier les cases.
 
+`Interface Executor` : Pool de processus. Au lieu d'utiliser les fonctionnalités de la classe `Thread`, on crée une variable utilisable par l'Executor: `ExecutorService service = Executors.newSingleThreadExecutor();`
+
+Puis on execute avec `service.execute( new Runnable() { public void run(){...}};`
+
 # class Case
 
 ### `Déplacer(Direction, Jeu)`
