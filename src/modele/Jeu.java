@@ -1,37 +1,60 @@
 package modele;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 import java.awt.Point;
 
 public class Jeu extends Observable {
 
-    // C'est le tableau que l'on utilise pour appliquer des opérations sur le Jeu.
+    /**
+     * Tableau que l'on affiche avec la Console et Swing et sur lequel on effectue des opérations.
+     */
     private Case[][] tabCases;
-    // Créer une Hash map pour retrouver l'indice de la classe.
+    /**
+     * Hahsmap qui nous permet de retrouver les coordonnées d'une case identifiée par son instance.
+     */
     private HashMap<Case, Point> IndexCase;
-
     /**
      * Regarde combien de case dispo il reste dans notre tableau.
      */
     private int case_dispo;
-
-    // Créer un nombre aléatoire en utilisant une seed à 4 qui nous permettra
-    // d'utiliser le nextInt.
-    private static Random rnd = new Random(4);
+    // TODO : Setup le score.
+    /**
+     * Meilleur score effectué sur le Jeu.
+     */
+    private int bestScore;
+    /**
+     * Score que le joueur est en train de faire.
+     */
+    private int score;
 
     public Jeu(int size) {
         tabCases = new Case[size][size];
         IndexCase = new HashMap<Case, Point>(size * size);
         case_dispo = size * size;
+
+        String content = getFileContent("./src/.bestScore");
+        assert content != null;
+        bestScore = Integer.parseInt(content);
         initialise_zero();
-        //monTest();
     }
 
-    // Récupère les coordonées de la case dans la HashMap.
-    public Point getCaseFromHash(Case key) {
-        return IndexCase.get(key);
+    /**
+     * Procédure qui s'occupe d'enlever toutes les références de case dane le tableau TabCase et remet à 0 ce dernier.
+     */
+    public void reset() {
+        IndexCase.clear();
+        // Peut être inutile car le garbage collector s'occupera des cases que l'on utilise plus mais bon.
+        for (int i = 0; i < getSize(); i++) {
+            for (int j = 0; j < getSize(); j++) {
+                tabCases[i][j] = null;
+            }
+        }
+        initialise_zero();
     }
-
 
     /**
      * Fonction de Controle qui va s'occuper d'appeler toutes les cases pour qu'ellle s'échange ou fusionne leur valeur.
@@ -39,6 +62,7 @@ public class Jeu extends Observable {
      * @param direction Direction vers laquelle les cases vont devoir s'interchanger ou fusionner.
      */
     public void action(Direction direction) {
+        // TODO : Essayer de mettre ça autre part pour pas nous bruler les yeux.
         int direction_colonne = 0, // Indiquera si on doit regarder la case à côté de notre case [i][j]
                 direction_ligne = 0, // Indiquera si on doit regarder la case en dessous de notre [i][j].
                 colonne_start = 0, // Indiquera à partir de quelle colonne on commence notre boucle.
@@ -61,38 +85,59 @@ public class Jeu extends Observable {
             }
             default -> throw new IllegalStateException("Cette direction n'existe pas.");
         }
+        // TODO : Nettoyage !
         //System.out.format("Nous allons nous déplacer vers %s \nDonc i est égale à %s\nEt j est égale à %s\n",
         //direction, direction_ligne, direction_colonne);
         //System.out.println("On commence à la ligne d'indice " + Math.abs(ligne_start) + " et de colonne " + Math.abs(colonne_start));
         //System.out.println("On fini à la ligne " + Math.abs(ligne_end) + " et colonne " + Math.abs(colonne_end));
 
+        // TODO : Essayer de mettre en place un Thread Pool qui lance pour chaque i,j un thread qui s'occupe de changer son pote.
+        // TODO : Implémenter la logique suivante :
+
         //System.out.println(IndexCase);
         // Pour chacune des cases on va appeler leur fonction déplace qui va s'occuper de gérer leur changement de valeur.
+
         for (int i = ligne_start; i < ligne_end; i++) {
             for (int j = colonne_start; j < colonne_end; j++) {
                 // Pour les directions haut et gauche, ligne_start et colonne sont négatifs.
                 // Afin d'éviter un problème d'indice on les reconverties en nombre positif.
-                //int absolute_i = i < 0 ? Math.abs(i) : i;
-                //int absolute_j = j < 0 ? Math.abs(j) : j;
                 int absolute_i = Math.abs(i);
                 int absolute_j = Math.abs(j);
 
-
                 int index_i_voisin = absolute_i + direction_ligne;
                 int index_j_voisin = absolute_j + direction_colonne;
-
 
                 // Si la case voisine est bien dans la grille, on peut faire l'échange avec la case (i,j).
                 if (!((index_i_voisin > (tabCases.length - 1) || index_i_voisin < 0)
                         || (index_j_voisin > (tabCases.length - 1) || index_j_voisin < 0))) {
                     // On demande à la case [i][j] de se déplacer avec sa case voisine aux coordonnées [index_i_voisin][index_j_voisin].
-                    System.out.println("La valeur est i est : " + absolute_i + " et la valeur j est : " + absolute_j);
-                    System.out.println("La valeur i du voisin : " + index_i_voisin + " et son j est : " + index_j_voisin);
+                    //System.out.println("La valeur de i est : " + absolute_i + " et la valeur j est : " + absolute_j);
+                    //System.out.println("La valeur i du voisin : " + index_i_voisin + " et son j est : " + index_j_voisin);
 
-                    Point voisin = new Point(index_i_voisin, index_j_voisin);
-                    //System.out.println(voisin);
-                    //afficheCoordonnees(voisin);
-                    tabCases[absolute_i][absolute_j].deplacer(voisin, this);
+                    Point voisin = IndexCase.get(tabCases[index_i_voisin][index_j_voisin]);
+
+                    // On récupère le pas que l'on va appliquer pour savoir si on doit consulter la case dans 2 index plus
+                    // loin pour éviter de refusionner ou continuer avec la case suivante.
+                    int result = 0;
+                    tabCases[absolute_i][absolute_j].deplacer(voisin, this, result);
+                    // Si la pas est 1, on doit vérifier la valeur du voisin d'avant (d'habitude on regarde celui d'après)
+                    // et voir si cette dernière est différente de 0, si c'est le cas on fusionne avec notre case [i][j]
+                    // qui juste avant a été fusionné et est donc null.
+                    int voisin_avant_i = Math.abs(i - 1);
+                    int voisin_avant_j = Math.abs(j - 1);
+                    if(result == 1
+                            && ((voisin_avant_i > 0 && voisin_avant_i < getSize() - 1)
+                            && (voisin_avant_j > 0 && voisin_avant_j < getSize() - 1))) {
+                        // On appelle le deplacement sur le vosin d'avant et pas la case i j.
+                        Point case_actuel = IndexCase.get(tabCases[absolute_i][absolute_j]);
+                        tabCases[voisin_avant_i][voisin_avant_j].deplacer(case_actuel, this, 0);
+                        // Selon la touche directionnel, on doit augmenter l'indice qui va dans la direction que l'on
+                        // regarde.
+                        switch (direction) {
+                            case haut, bas -> i += 1;
+                            case gauche, droite -> j +=1;
+                        }
+                    }
                 } else {
                     System.out.format("Skipping ligne %s et colonne %s \n", i, j);
                 }
@@ -100,26 +145,40 @@ public class Jeu extends Observable {
         }
         // On a fini de déplacer toutes les Cases entre elles on va pouvoir ajouter 2 nouvelles valeurs dans le jeu.
         // Flemme de faire des copier-coller en plus on peut être amené à en générer plus donc on aura juste à changer le 2.
+        // Lance dans un thread le calcul du score.
+        calculLeScore();
         ajoute_nombre_aleatoire();
     }
-
-    public static boolean checkInBound(int value, int upperBound, int lowerBound) {
-        return value < upperBound && value > lowerBound;
-    }
-
     /**
-     * Procédure qui affiche les coordonnées d'un point passé en paramètre.
-     *
-     * @param p Point dont on veut voir les coordonnées.
+     * Procédure qui lance dans un Thread le calcul du score et va changer notre score par le résultat.
      */
-    public static void afficheCoordonnees(Point p) {
-        System.out.format("\nX : %s \nY : %s \n", p.x, p.y);
+    private void calculLeScore() {
+        new Thread() {
+            @Override
+            public void run() {
+                int score_tour = 0;
+                for (Case[] tabCase : tabCases) {
+                    for (int j = 0; j < tabCases.length; j++) {
+                        score_tour += tabCase[j].getValeur();
+                        System.out.println("Case " + tabCase[j].getValeur());
+                    }
+                }
+                score = score_tour;
+            }
+        }.start();
     }
-
+    /**
+     * Fonction qui lance dans un thread en parallèle de l'éxécution principale des fonctions comme action ...
+     * @param direction La direction que l'on passe à la fonction action.
+     */
     public void monTest(Direction direction) {
         new Thread() {
             public void run() {
                 action(direction);
+                if(case_dispo == 0) {
+                    // On écris le score dans un fichier.
+                    // On afichera via la procédure rafraichir un message.
+                }
                 // Notification de la vue, suite à la mise à jour du champ lastValue.
                 setChanged();
                 // Va appeler la méthode update dans le Swing2048 (Vue) pour mettre à jour
@@ -128,60 +187,6 @@ public class Jeu extends Observable {
             }
         }.start();
 
-    }
-
-    /**
-     * @param row : Ligne du tableau.
-     *            Tableau 1D de case où les valeurs égales à 0 ou null sont à droite.
-     */
-    private void slide(Case[] row) {
-        int i = 0;
-        System.out.println("Hello there " + IndexCase.get(row[0]));
-        for (int j = row.length - 1; j > 0; j--) {
-            //System.out.println("Hello there j : " + j + " i : " + i);
-            /**
-             * On check si la première valeur est null (i) et si la dernière est non null (j).
-             * Si c'est le cas alors on inverse les deux et on réduit le j pour que à la prochaine itération on regarde celui d'avant.
-             * Si les deux sont null on décrémente j et on reteste.
-             * Si les deux ont des valeurs non null on décrémente juste j.
-             * Si j <= i on arrête, car on a trié le tout.
-             * Complexité O(n) -> pas ouf.
-             */
-            if (j <= i) {
-                break;
-            }
-            if ((row[i].getValeur() == 0 || row[i] == null)
-                    && (row[j].getValeur() != 0 || row[j] != null)) {
-                Case swap = row[i]; // Case Null.
-                row[i] = row[j]; // On met celle avec une Valeur dans la non null.
-                row[j] = swap; // On met la Null dans l'ancienne case.
-                Point coord_j = IndexCase.get(row[j]);
-                Point coord_swap = IndexCase.get(swap);
-
-                // On oublie pas de changer les cases dans la HashMap.
-                // On a décidé de faire une suppression puis de remettre les Case dans la HashMap.
-                IndexCase.remove(swap);// Coordonnées de l'ancien i.
-                IndexCase.put(swap, coord_j); // Les nouvelles coordonnées de i sont celles de j.
-
-                IndexCase.remove(row[j]);
-                IndexCase.put(row[j], coord_swap); // Les nouvelles coordonnées de j sont celles de l'ancien i.
-
-                i++;
-            }
-        }
-    }
-
-    /**
-     * @param array : Tableau / Object 2D dont on veut extraire la colonne.
-     * @param index : La colonne que l'on veut extraire du tableau 2D.
-     * @return Un Tableau qui contient les éléments de la colonne que l'on a passé en paramètre.
-     */
-    private static Object[] getColumn(Object[][] array, int index) {
-        Object[] column = new Object[array[0].length];
-        for (int i = 0; i < column.length; i++) {
-            column[i] = array[i][index];
-        }
-        return column;
     }
 
     // Nous permettra de savoir ce qui se passe dans le tableau de Jeu.
@@ -274,19 +279,6 @@ public class Jeu extends Observable {
         // On oublie pas de changer la case dans la HashMap.
     }
 
-    /**
-     * Fonction qui appel la méthode static dans Case pour comparer 2 case entre elle.
-     *
-     * @param case1 Case source.
-     * @param case2 Case que l'on va comparer.
-     * @throws Exception
-     */
-    private void test_equals(Case case1, Case case2) throws Exception {
-        // Test la fonction d'égalité qui doit remplir les 3 règles du contrat
-        // (Réflexivité, Symétrie, Transitivité).
-        Case.equal_Case(case1, case2);
-    }
-
     // Initialise notre tableau à Null.
     public void initialise_zero() {
         int id = 0;
@@ -299,72 +291,78 @@ public class Jeu extends Observable {
                 id++;
             }
         }
+        case_dispo = tabCases.length*tabCases.length;
+        ajoute_nombre_aleatoire();
+        ajoute_nombre_aleatoire();
     }
 
-    public void rnd() { // Processus métier.
-        new Thread() { // permet de libérer le processus graphique ou de la console
-            public void run() { // On définit ce que le thread va faire.
-                int r;
-                // On stock la case que l'on est en train de regarder.
-                Case case_actuel;
-                int id_case = 0;
+    public boolean jeu_terminee() {
+        if(case_dispo <= 0) {
+            System.out.println("Le Jeu est terminé on affiche un overlay.");
+            return true;
+        }
+        return false;
+    }
 
-                for (int i = 0; i < tabCases.length; i++) {
-                    for (int j = 0; j < tabCases.length; j++) {
-                        // On créer un nombre aléatoire entre 0 et 2.
-                        r = rnd.nextInt(3);
-                        // On stock les coordonnées de la case dans un objet Point.
-                        Point coordonnees_case = new Point(i, j);
-                        // génère un identifiant unique pour la case.
-                        id_case++;
-                        tabCases[i][j] = new Case(0, id_case);
-                        case_actuel = tabCases[i][j];
+    //  ================= Méthodes Static  =======================
 
-                        switch (r) { // Selon la valeur r on met soit null, 2 ou 4 dans la case i,j du tableau.
-                            case 0:
-                                tabCases[i][j] = null;
-                                case_actuel = tabCases[i][j];
-                                IndexCase.put(case_actuel, coordonnees_case);
-                                // Debug_Jeu(case_actuel, coordonnees_case);
-                                break;
-                            case 1:
-                                tabCases[i][j] = new Case(2, id_case);
-                                case_actuel = tabCases[i][j];
-                                IndexCase.put(case_actuel, coordonnees_case);
-                                // Affiche la valeur que l'on a mis dans la Hash Table.
-                                // Debug_Jeu(case_actuel, coordonnees_case);
-                                break;
-                            case 2:
-                                tabCases[i][j] = new Case(4, id_case);
-                                case_actuel = tabCases[i][j];
-                                IndexCase.put(case_actuel, coordonnees_case);
-                                // Affiche la valeur que l'on a mis dans la Hash Table.
-                                // Debug_Jeu(case_actuel, coordonnees_case);
-                                break;
-                        }
-                    }
-                }
-                try {
-                    // tabCases[0][0].equals(tabCases[1][0]);
-                    //test_equals();
-                    System.out.println("Tests passed Successfully !");
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
+    /**
+     * Fonction qui s'occupe de récupérer le contenu d'un fichier et de renvoyer le scanner qui est le contenu de ce dernier.
+     * @param file_path Le chemin vers le fichier dont on veut récupérer les éléments à partir de la racine du projet.
+     * @return Scanner dont on peut extraire les données.
+     */
+    public static String getFileContent(String file_path) {
+        try {
+            File fichier = new File(file_path);
+            Scanner reader = new Scanner(fichier);
+            String content = reader.nextLine();
+            reader.close();
+            return content;
+        } catch (FileNotFoundException e) {
+            System.out.println("No data found");
+            //e.printStackTrace();
+            return null;
+        }
+    }
 
-        }.start();
+    /**
+     * Ecris dans un fichier le contenu passé en paramètre.
+     * @param content String que l'on veut écrire dans le fichier
+     * @param file_path Chemin du fichier que l'on veut créer.
+     */
+    public static void createFileWithContent(String file_path, String content) {
+        try {
+            FileWriter writer = new FileWriter(file_path);
+            writer.write(content);
+            writer.close();
+            System.out.println("Ecriture réussite");
+        } catch (IOException e) {
+            System.out.println("Écriture du meilleur score impossible...");
+            e.printStackTrace();
+        }
+    }
+    /**
+     * Fonction qui vérifie si une valeur est bien dans l'intervalle passé en paramètre.
+     * @param value valeur que l'on veut vérifier.
+     * @param upperBound Le max de l'intervalle.
+     * @param lowerBound Le min de l'intervalle.
+     * @return true si la valeur est dans l'intervalle false sinon.
+     */
+    public static boolean checkInBound(int value, int upperBound, int lowerBound) {
+        return value < upperBound && value > lowerBound;
+    }
 
-        // Notification de la vue, suite à la mise à jour du champ lastValue.
-        setChanged();
-        // Va appeler la méthode update dans le Swing2048 (Vue) pour mettre à jour
-        // l'affichage Graphique.
-        notifyObservers();
-
+    /**
+     * Procédure qui affiche les coordonnées d'un point passé en paramètre.
+     *
+     * @param p Point dont on veut voir les coordonnées.
+     */
+    public static void afficheCoordonnees(Point p) {
+        System.out.format("\nX : %s \nY : %s \n", p.x, p.y);
     }
 
 
-    // Accesseur et Mutateur.
+    // =============== Accesseur et Mutateur ============================= Bon courage
 
     /**
      * @return Récupère la taille du tableau.
@@ -460,4 +458,23 @@ public class Jeu extends Observable {
         IndexCase.put(nouvelle_case, coordo_case);
     }
 
+    public void setCase_dispo() {
+        case_dispo++;
+    }
+
+    /**
+     * Récupère les coordonées de la case dans la HashMap.
+     * @param key La case que l'on veut récupérer.
+     * @return un Point qui correspond à la case que l'on a passé en paramètre.
+     */
+    public Point getCaseFromHash(Case key) {
+        return IndexCase.get(key);
+    }
+
+    public int getBestScore () {
+        return bestScore;
+    }
+    public int getScore () {
+        return score;
+    }
 }

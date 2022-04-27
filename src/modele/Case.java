@@ -139,13 +139,15 @@ public class Case {
      * @param moi Les coordonées de la case courante.
      * @param grille La grille dont on va modifier les cases.
      */
-    private void fusion(Point voisin, Point moi, Jeu grille) {
+    private void fusion(Point voisin, Point moi, Jeu grille, int result) {
         Case case_voisin = grille.getCase(voisin);
         int valeur_voisin = grille.getCase(voisin).getValeur();
 
         if(this.valeur == valeur_voisin) {
             // Cas : Ma valeur est égale à celle de mon voisin, on fusionne et je passe à 0. exemple ( 2 * 2).
             change_cases(grille,case_voisin, this, valeur_voisin+this.valeur, 0);
+            result += 1;
+            grille.setCase_dispo();
         }
         else if(this.valeur != 0 && valeur_voisin == 0) {
             // Cas : Ma valeur est ¬null et mon voisin est null, je recopie ma valeur dans celle du voisin et je passe à 0.
@@ -158,15 +160,15 @@ public class Case {
     }
 
     /**
-     * Procédure qui s'occupe de changer gérer le déplacement de la case courante, fait entre autre appel à la fusion.
+     * Fonction qui s'occupe de changer gérer le déplacement de la case courante, fait entre autre appel à la fusion.
      * @param voisin Point qui fait référence à la case voisine dans la grille.
      * @param grille La grille dont on veut changer les cases.
      */
-    public void deplacer(Point voisin, Jeu grille) {
+    public void deplacer(Point voisin, Jeu grille, int result) {
         Point mesCoordonnees = grille.getCaseFromHash(this); // Je récupère mes coordonnées depuis la hashmap.
         // Si je ne suis pas égale à 0 je dois transmettre ma valeur ou fusionner avec voisin
         if(!(this.valeur == 0)) {
-            fusion(voisin,mesCoordonnees, grille);
+            fusion(voisin,mesCoordonnees,grille, result);
         }
     }
 

@@ -4,6 +4,11 @@
 https://jmdoudoux.developpez.com/cours/developpons/java/chap-swing.php
 
 
+# Design Pattern : Observer
+
+La classe Jeu est l'Objet qui est observé par les classes Swing et Console, on utilise la méthode setChanged 
+pour les notifiers qu'il y a eu un changement dans le modele et que la vue doit se rafraichir.
+
 # Modèle 
  
 Classe : Jeu et Case, Enum.
@@ -30,6 +35,17 @@ la valeur est changé aussi bien dans le tableau que la hashmap.
 
 Le jeu est basé sur deux fonctions, action et deplacer qui sont respectivement dans les classes
 Jeu et Case.
+
+## Logique 
+
+Pour fusionner les cases et additionner leur valeur on doit regarder de quel côté on va :
+___
+- Vers la droite : j'additionne les valeurs de droite à gauche et combler le vide de gauche à droite.
+- Vers la gauche : j'additionne les valeurs de gauche à droite et on comble le vide de droite à gauche.
+- Vers le haut : j'additionne les valeurs de bas en haut et comble le vide de haut en bas.
+- Vers le bas : j'aditionne les valeurs de haut en bas et comble le vide bas en haut.
+
+Pour le moment, ce jeu ne fait pas l'addition dans ce sens mais dans le sens du déplacement de la grille.
 
 ### Procédure action(Direction direction)
 Fonction de Controle qui va s'occuper d'appeler toutes les cases pour qu'elles s'échangent ou fusionnent leurs valeurs
@@ -90,3 +106,4 @@ L'algo est assez simple il suffit de gérer les cas suivants :
 - Si la valeur de la case courante != 0 et le voisin est égale à 0, on fusionne avec voisin et passe case courante à 0.
 - Dans les autres cas, on ne fait rien.
 
+### Remarques 
