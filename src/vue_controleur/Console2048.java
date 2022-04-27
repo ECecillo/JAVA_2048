@@ -62,7 +62,7 @@ public class Console2048 extends Thread implements Observer {
 
                         if (s.equals("4") || s.equals("8") || s.equals("6") || s.equals("2") ) {
                             end = true;
-                            jeu.rnd();
+                            jeu.monTest(null);
                         }
                     }
 

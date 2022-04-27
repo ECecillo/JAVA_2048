@@ -1,4 +1,4 @@
-package modele.constants;
+package vue_controleur.constants;
 
 import java.awt.Color;
 
@@ -7,7 +7,7 @@ public final class Constants {
     private Constants() {
         // restrict instantiation
     }
-
+    public static final Color TRANSPARENT_WINDOW_BACKGROUND = new Color(143, 112, 82, 90);
     public static final Color WINDOW_BACKGROUND = new Color(143, 112, 82);
     public static final Color BACKGROUND_COLOR = new Color(117, 99, 82);
     public static final Color COLOR_EMPTY = new Color(204, 192, 179);
