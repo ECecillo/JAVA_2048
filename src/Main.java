@@ -25,9 +25,15 @@ public class Main {
     public static void mainSwing() {
 
         Jeu jeu = new Jeu(4);
-        Swing2048 vue = new Swing2048(jeu);
-        // 
+        Jeu jeu2 = new Jeu(4);
+
+        // On créer 2 JFrame qui vont contenir chacune une instance différente
+        // de 2048 mais auxquels on affecte les mêmes listener.
+        Swing2048 vue = new Swing2048(jeu, jeu2);
+
+        //
         jeu.addObserver(vue);
+        jeu2.addObserver(vue);
         // On affiche.
         vue.setVisible(true);
     }
