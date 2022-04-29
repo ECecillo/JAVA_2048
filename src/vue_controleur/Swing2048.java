@@ -20,8 +20,8 @@ import java.util.Observer;
 public class Swing2048 extends JFrame implements Observer {
     private static final int PIXEL_PER_SQUARE = 60;
     // tableau de cases : i, j -> case graphique
-    private JLabel[][] tabC;
-    private Jeu jeu;
+    private JLabel[][] tabC, tabC2;
+    private Jeu jeu, jeu2;
     /**
      * JLabel qui va afficher le score actuel dans le Jeu
      */
@@ -30,17 +30,21 @@ public class Swing2048 extends JFrame implements Observer {
      * JLabel qui va afficher le meilleur score qui se trouve dans le fichier .bestScore.
      */
     private JLabel bestScore;
+    boolean initializer;
 
 
-    public Swing2048(Jeu _jeu) {
+    public Swing2048(Jeu _jeu, Jeu _jeu2) {
         jeu = _jeu;
+        jeu2 = _jeu2;
+
         tabC = new JLabel[jeu.getSize()][jeu.getSize()];
+        tabC2 = new JLabel[jeu2.getSize()][jeu2.getSize()];
         // Fonction qui s'occupe de terminer la fenêtre lorsque l'on appuie sur un bouton fermer.
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(1200, 600);
         // Définie la taille de la JFrame en fonction de la taille de la fenêtre ().
-        setSize(500, 625);
         this.setBackground(BACKGROUND_COLOR);
-        this.setLocationRelativeTo(null);
+        setLocationRelativeTo(null);
         this.setFocusable(true);
         this.requestFocus();
 
@@ -49,33 +53,53 @@ public class Swing2048 extends JFrame implements Observer {
 
         // Un Pane est associé à un JFrame, ce dernier est soit un contentPane soit un menuPane.
         // Un pane sera a son tour affecté à un Layout Manager pour dire comment le Pane se comporte dans la JFrame.
-        JPanel content = (JPanel) this.getContentPane();
-        setPanelBackground(content, Color.BLACK);
+        JPanel contentMain = (JPanel) this.getContentPane();
+        JPanel contentMain1 = new JPanel();
+        JPanel contentMain2 = new JPanel();
 
-        JPanel grille = createGrilleJeu();
+        contentMain.setLayout(new GridLayout(2, 1));
+        contentMain1.setLayout(new GridLayout(1, 2));
+        contentMain2.setLayout(new GridLayout(1, 2));
+
+        setPanelBackground(contentMain, Color.BLACK);
+
+        JPanel grille = createGrilleJeu(jeu, tabC);
+        JPanel grille2 = createGrilleJeu(jeu2, tabC2);
+
         grille.setPreferredSize(new Dimension(375,0));
+        grille2.setPreferredSize(new Dimension(375, 0));
 
-        JPanel panneauHorizontal = createHorizontalPannel();
-        panneauHorizontal.setPreferredSize(new Dimension(0, 75));
+        JPanel panneauHorizontal1 = createHorizontalPannel();
+        JPanel panneauHorizontal2 = createHorizontalPannel();
+        panneauHorizontal1.setPreferredSize(new Dimension(0, 75));
+        panneauHorizontal2.setPreferredSize(new Dimension(0, 75));
 
         // On ajoute les pannels dans notre container content.
-        content.add(grille, BorderLayout.CENTER);
-        content.add(panneauHorizontal, BorderLayout.NORTH);
+        //content.add(grille, BorderLayout.CENTER);
+        //content.add(grille2, BorderLayout.EAST);
+        //content.add(panneauHorizontal, BorderLayout.NORTH);
+
+        contentMain1.add(panneauHorizontal1);
+        contentMain1.add(panneauHorizontal2);
+        contentMain2.add(grille);
+        contentMain2.add(grille2);
+        contentMain.add(contentMain1);
+        contentMain.add(contentMain2);
 
         // On remplace le ContentPane par notre Content pane que l'on vient de créer.
-        setContentPane(content);
+        setContentPane(contentMain);
         ajouterEcouteurClavier();
         // Récupère les informations dans le tableau Jeu et met dans les labels du texte.
         rafraichir();
     }
 
-    // TODO : Ajouter un panel quand le jeu est terminée.
-    
+
+
     /**
      * Fonction qui retourne un JPanel qui représente la grille du jeu 2048.
      * @return JPanel remplis avec des cases colorées.
      */
-    private JPanel createGrilleJeu() {
+    private JPanel createGrilleJeu(Jeu jeu, JLabel[][] tabC) {
         JPanel contentPane = new JPanel(new GridLayout(jeu.getSize(), jeu.getSize()));
         setPanelBackground(contentPane, BACKGROUND_COLOR);
         for (int i = 0; i < jeu.getSize(); i++) {
@@ -85,7 +109,6 @@ public class Swing2048 extends JFrame implements Observer {
                 Border border = BorderFactory.createLineBorder(Color.darkGray, 5);
                 // Dans chaque case du tableau on stock on composant JLabel.
                 tabC[i][j] = new JLabel();
-
                 // On défini pour ce composant une bordure avec setBorder.
                 tabC[i][j].setBorder(border);
                 // On définie l'alignement du composant pour qu'il soit au centre.
@@ -106,17 +129,7 @@ public class Swing2048 extends JFrame implements Observer {
         JPanel sidePan = new JPanel(new GridLayout(1, 3));
         sidePan.add(createText("2048", SwingConstants.CENTER, COLOR_VALUE_LIGHT, "Bold", 56));
         setPanelBackground(sidePan, WINDOW_BACKGROUND);
-        /*
-        JLabel title = createText("2048", SwingConstants.LEFT, COLOR_VALUE_LIGHT,"Bold", 54);
-        JLabel score = createText("0", SwingConstants.CENTER, COLOR_VALUE_LIGHT,"Bold", 24);
-        JLabel meilleurScore = createText("0", SwingConstants.CENTER, COLOR_VALUE_LIGHT,"Bold", 24);
 
-        JButton rejouer = new JButton("Rejouer");
-
-        sidePan.add(title);
-        sidePan.add(score);
-        sidePan.add(meilleurScore);
-        sidePan.add(rejouer);*/
         sidePan.add(createScorePane());
         sidePan.add(createBestScorePane());
         sidePan.add(createReplayPane());
@@ -187,6 +200,18 @@ public class Swing2048 extends JFrame implements Observer {
         replay.setPreferredSize(new Dimension(200, 50));
         replay.setForeground(COLOR_VALUE_LIGHT);
         replay.setBackground(BACKGROUND_COLOR);
+
+        replay.addActionListener(new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                jeu.reset();
+                rafraichir();
+                ajouterEcouteurClavier();
+                setFocusable(true);
+                requestFocus();
+            }
+        });
+
 
         endGamePane.add(text, BorderLayout.NORTH);
         endGamePane.add(replay, BorderLayout.CENTER);
@@ -269,6 +294,7 @@ public class Swing2048 extends JFrame implements Observer {
                 for (int i = 0; i < jeu.getSize(); i++) {
                     for (int j = 0; j < jeu.getSize(); j++) {
                         Case c = jeu.getCase(i, j);
+                        Case c2 = jeu2.getCase(i,j);
                         // Si la case du tableau est null on affiche une case avec un texte vide.
                         if (c == null || c.getValeur() == 0) {
                             tabC[i][j].setText("");
@@ -277,12 +303,29 @@ public class Swing2048 extends JFrame implements Observer {
                             tabC[i][j].setText(c.getValeur() + ""); // On lui met une valeur 2 , 4 ....
                             changeTextBackground(tabC[i][j], c.getValeur());
                         }
+                        if (c2 == null || c2.getValeur() == 0) {
+                            tabC2[i][j].setText("");
+                            changeTextBackground(tabC2[i][j], 0);
+                        } else {
+                            tabC2[i][j].setText(c2.getValeur() + ""); // On lui met une valeur 2 , 4 ....
+                            changeTextBackground(tabC2[i][j], c2.getValeur());
+                        }
+                        setNewTextValue(c, tabC, i , j);
+                        setNewTextValue(c2, tabC2, i , j);
                     }
                 }
             }
         });
+    }
 
-
+    private void setNewTextValue(Case c, JLabel[][] grille, int i, int j) {
+        if (c == null || c.getValeur() == 0) {
+            tabC[i][j].setText("");
+            changeTextBackground(tabC[i][j], 0);
+        } else {
+            tabC[i][j].setText(c.getValeur() + ""); // On lui met une valeur 2 , 4 ....
+            changeTextBackground(grille[i][j], c.getValeur());
+        }
     }
 
     /**
@@ -294,14 +337,26 @@ public class Swing2048 extends JFrame implements Observer {
         addKeyListener(new KeyAdapter() { // new KeyAdapter() { ... } est une instance de classe anonyme, il s'agit d'un objet qui correspond au controleur dans MVC
             @Override
             public void keyPressed(KeyEvent e) {
-                System.out.println("Hello there");
+                //System.out.println("Hello there");
 
                 switch (e.getKeyCode()) {  // on regarde quelle touche a été pressée
-                    case KeyEvent.VK_LEFT -> jeu.monTest(Direction.gauche);
+                    case KeyEvent.VK_LEFT -> {
+                        jeu.monTest(Direction.gauche);
+                        jeu2.monTest(Direction.gauche);
+                    }
                     // A changer, car ici à chaque case que l'on appuie on génère une nouvelle classe.
-                    case KeyEvent.VK_RIGHT -> jeu.monTest(Direction.droite);
-                    case KeyEvent.VK_DOWN -> jeu.monTest(Direction.bas);
-                    case KeyEvent.VK_UP -> jeu.monTest(Direction.haut);
+                    case KeyEvent.VK_RIGHT -> {
+                        jeu.monTest(Direction.droite);
+                        jeu2.monTest(Direction.droite);
+                    }
+                    case KeyEvent.VK_DOWN -> {
+                        jeu.monTest(Direction.bas);
+                        jeu2.monTest(Direction.bas);
+                    }
+                    case KeyEvent.VK_UP -> {
+                        jeu.monTest(Direction.haut);
+                        jeu2.monTest(Direction.haut);
+                    }
                 }
             }
         });
